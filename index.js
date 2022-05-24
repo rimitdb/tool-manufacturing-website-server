@@ -17,6 +17,7 @@ async function run() {
     try {
         await client.connect();
         const toolCollection = client.db("ToolManuFac").collection("tools");
+        const orderCollection = client.db("ToolManuFac").collection("order");
 
         app.get('/tool', async (req, res) => {
             const query = {};
@@ -25,7 +26,7 @@ async function run() {
             res.send(tools)
         });
 
-        // Get API
+        // Get Tool API
 
         app.get('/tool/:id', async (req, res) => {
             const id = req.params.id;
@@ -34,7 +35,7 @@ async function run() {
             res.send(tool);
         });
 
-        //Update API
+        //Update Quantity API
 
         app.put('/tool/:id', async (req, res) => {
             const id = req.params.id;
@@ -50,7 +51,42 @@ async function run() {
             res.send(result);
         })
 
-        //Delete API
+        //Order Info API
+        app.get('/order', async (req, res) => {
+            const email = req.query.email;
+            console.log(email);
+            const query = { email: email };
+            const orders = await orderCollection.find(query).toArray();
+            res.send(orders);
+        })
+
+        app.post('/order', async (req, res) => {
+            const order = req.body;
+            const query = { toolId: order.toolId, email: order.email };
+            const result = await orderCollection.insertOne(order);
+            res.send(result);
+        })
+
+        //Update Quantity
+
+        app.get('/updateQuantity', async (req, res) => {
+            const order_quantity = req.query.order_quantity;
+
+            const tools = await toolCollection.find().toArray();
+
+            const query = { order_quantity: order_quantity };
+            const orders = await orderCollection.find(query).toArray();
+
+            tools.forEach(tool => {
+                const toolOrders = orders.filter(order => order.toolName === tool.name);
+                const ordered = toolOrders.map(o => o.order_quantity);
+                // const availableStock = tool.order_quantity.filter(q => !ordered.includes(q));
+                // tool.availableStock = availableStock;
+                tool.ordered = toolOrders.map(o => o.order_quantity);
+            })
+            res.send(tools);
+
+        })
 
     }
     finally {
