@@ -25,6 +25,8 @@ async function run() {
             res.send(tools)
         });
 
+        // Get API
+
         app.get('/tool/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -32,7 +34,7 @@ async function run() {
             res.send(tool);
         });
 
-        //Update
+        //Update API
 
         app.put('/tool/:id', async (req, res) => {
             const id = req.params.id;
@@ -48,7 +50,7 @@ async function run() {
             res.send(result);
         })
 
-        //Delete
+        //Delete API
 
     }
     finally {
