@@ -49,7 +49,7 @@ async function run() {
             }
             const result = await toolCollection.updateOne(filter, updatedQuantity, options);
             res.send(result);
-        })
+        });
 
         //Order Info API
         app.get('/order', async (req, res) => {
@@ -58,14 +58,14 @@ async function run() {
             const query = { email: email };
             const orders = await orderCollection.find(query).toArray();
             res.send(orders);
-        })
+        });
 
         app.post('/order', async (req, res) => {
             const order = req.body;
             const query = { toolId: order.toolId, email: order.email };
             const result = await orderCollection.insertOne(order);
             res.send(result);
-        })
+        });
 
         //Update Quantity
 
@@ -85,8 +85,15 @@ async function run() {
                 tool.ordered = toolOrders.map(o => o.order_quantity);
             })
             res.send(tools);
+        });
 
-        })
+        // Order Delete API
+
+        app.delete('/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await orderCollection.deleteOne(query);
+        });
 
     }
     finally {
