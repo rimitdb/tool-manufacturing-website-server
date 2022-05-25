@@ -44,18 +44,34 @@ async function run() {
             res.send(tools)
         });
 
+        app.get('/user', verifyJWT, async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        });
+
+        app.put('/user/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
+
+
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
             const filter = { email: email };
-            const options = { upsert: true }
+            const options = { upsert: true };
             const updateUser = {
                 $set: user,
             };
             const result = await userCollection.updateOne(filter, updateUser, options);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
             res.send({ result, accessToken: token });
-        })
+        });
 
         // Get Tool API
 
@@ -129,7 +145,6 @@ async function run() {
         app.get('/orders', async (req, res) => {
             const id = req.query.toolId;
             const query = { _id: id };
-            console.log(query)
             const results = await orderCollection.find(query).toArray();
             res.send(results);
         });
@@ -137,7 +152,6 @@ async function run() {
         app.delete('/order/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
-            console.log(query)
             const result = await orderCollection.deleteOne(query);
         });
 
