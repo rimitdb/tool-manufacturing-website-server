@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
@@ -18,6 +19,7 @@ async function run() {
         await client.connect();
         const toolCollection = client.db("ToolManuFac").collection("tools");
         const orderCollection = client.db("ToolManuFac").collection("order");
+        const userCollection = client.db("ToolManuFac").collection("users");
 
         app.get('/tool', async (req, res) => {
             const query = {};
@@ -25,6 +27,19 @@ async function run() {
             const tools = await cursor.toArray();
             res.send(tools)
         });
+
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true }
+            const updateUser = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateUser, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ result, accessToken: token });
+        })
 
         // Get Tool API
 
@@ -54,7 +69,6 @@ async function run() {
         //Order Info API
         app.get('/order', async (req, res) => {
             const email = req.query.email;
-            console.log(email);
             const query = { email: email };
             const orders = await orderCollection.find(query).toArray();
             res.send(orders);
@@ -89,9 +103,18 @@ async function run() {
 
         // Order Delete API
 
+        app.get('/orders', async (req, res) => {
+            const id = req.query.toolId;
+            const query = { _id: id };
+            console.log(query)
+            const results = await orderCollection.find(query).toArray();
+            res.send(results);
+        });
+
         app.delete('/order/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
+            console.log(query)
             const result = await orderCollection.deleteOne(query);
         });
 
@@ -108,4 +131,4 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
     console.log('Listening to port', port);
-})
+});
