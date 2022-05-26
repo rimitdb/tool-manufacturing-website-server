@@ -54,10 +54,19 @@ async function run() {
             res.send(result);
         });
 
+        app.delete("/tool/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await toolCollection.deleteOne(query);
+            res.send(result);
+        });
+
         // User API
 
         app.get('/user', verifyJWT, async (req, res) => {
-            const users = await userCollection.find().toArray();
+            const query = {};
+            const cursor = userCollection.find(query);
+            const users = await cursor.toArray();
             res.send(users);
         });
 
@@ -128,12 +137,12 @@ async function run() {
 
         //Order Info API
 
-        // app.get("/order", async (req, res) => {
-        //     const query = {};
-        //     const cursor = orderCollection.find(query);
-        //     const orders = await cursor.toArray();
-        //     res.send(orders);
-        // });
+        app.get("/order", async (req, res) => {
+            const query = {};
+            const cursor = orderCollection.find(query);
+            const orders = await cursor.toArray();
+            res.send(orders);
+        });
 
 
         app.get('/order', verifyJWT, async (req, res) => {
