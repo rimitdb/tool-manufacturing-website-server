@@ -110,6 +110,33 @@ async function run() {
             res.send({ result, accessToken: token });
         });
 
+
+        app.put('/user/:id', async (req, res) => {
+            const id = req.params.id;
+            const user = req.body;
+            const filter = { email: user.email };
+            const options = { upsert: true }
+            const updateUser = {
+                $set: {
+                    education: user.education,
+                    location: user.location,
+                    phone: user.phone,
+                    linkedin: user.linkedin
+                },
+            }
+            const result = await userCollection.updateOne(filter, updatedQuantity, options);
+            res.send(result);
+        });
+
+
+        app.delete('/user/:id', async (req, res) => {
+            const id = req.params.email;
+            const query = { _id: ObjectId(id) };
+            const result = await userCollection.deleteOne(query);
+            res.send(result);
+        });
+
+
         // Get Tool API
 
         app.get('/tool/:id', async (req, res) => {
@@ -159,35 +186,6 @@ async function run() {
             }
         });
 
-        app.post('/order', async (req, res) => {
-            const order = req.body;
-            const query = { toolId: order.toolId, email: order.email };
-            const result = await orderCollection.insertOne(order);
-            res.send(result);
-        });
-
-        //Update Quantity
-
-        app.get('/updateQuantity', async (req, res) => {
-            const order_quantity = req.query.order_quantity;
-
-            const tools = await toolCollection.find().toArray();
-
-            const query = { order_quantity: order_quantity };
-            const orders = await orderCollection.find(query).toArray();
-
-            tools.forEach(tool => {
-                const toolOrders = orders.filter(order => order.toolName === tool.name);
-                const ordered = toolOrders.map(o => o.order_quantity);
-                // const availableStock = tool.order_quantity.filter(q => !ordered.includes(q));
-                // tool.availableStock = availableStock;
-                tool.ordered = toolOrders.map(o => o.order_quantity);
-            })
-            res.send(tools);
-        });
-
-        // Order Delete API
-
         app.get('/orders', async (req, res) => {
             const id = req.query.toolId;
             const query = { _id: id };
@@ -195,11 +193,21 @@ async function run() {
             res.send(results);
         });
 
+        app.post('/order', async (req, res) => {
+            const order = req.body;
+            const query = { toolId: order.toolId, email: order.email };
+            const result = await orderCollection.insertOne(order);
+            res.send(result);
+        });
+
         app.delete('/order/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
+            res.send(result);
         });
+
+
 
         // Review API
 
