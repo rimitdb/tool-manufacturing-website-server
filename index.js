@@ -36,6 +36,10 @@ async function run() {
         const toolCollection = client.db("ToolManuFac").collection("tools");
         const orderCollection = client.db("ToolManuFac").collection("order");
         const userCollection = client.db("ToolManuFac").collection("users");
+        const reviewCollection = client.db("ToolManuFac").collection("reviews");
+
+
+        // Product API
 
         app.get('/tool', async (req, res) => {
             const query = {};
@@ -44,19 +48,43 @@ async function run() {
             res.send(tools)
         });
 
+        app.post("/tool", async (req, res) => {
+            const newProduct = req.body;
+            const result = await toolCollection.insertOne(newProduct);
+            res.send(result);
+        });
+
+        // User API
+
         app.get('/user', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users);
         });
 
-        app.put('/user/admin/:email', async (req, res) => {
+        app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
-            const filter = { email: email };
-            const updateDoc = {
-                $set: { role: 'admin' },
-            };
-            const result = await userCollection.updateOne(filter, updateDoc);
-            res.send(result);
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin });
+
+        })
+
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const reqSender = req.decoded.email;
+            const reqSenderAcc = await userCollection.findOne({ email: reqSender });
+            if (reqSenderAcc.role === 'admin') {
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                };
+                const result = await userCollection.updateOne(filter, updateDoc);
+                res.send(result);
+            }
+            else {
+                res.status(403).send({ message: 'Unauthorize Access' });
+            }
+
         });
 
 
@@ -99,6 +127,15 @@ async function run() {
         });
 
         //Order Info API
+
+        // app.get("/order", async (req, res) => {
+        //     const query = {};
+        //     const cursor = orderCollection.find(query);
+        //     const orders = await cursor.toArray();
+        //     res.send(orders);
+        // });
+
+
         app.get('/order', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
@@ -153,6 +190,21 @@ async function run() {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
+        });
+
+        // Review API
+
+        app.get('/review', async (req, res) => {
+            const query = {};
+            const cursor = reviewCollection.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews)
+        });
+
+        app.post("/review", async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
         });
 
     }
